@@ -1,6 +1,7 @@
-authors = ["Gregory Wagner <wagner.greg@gmail.com>"]
 name = "Dao"
 uuid = "923aee56-57d8-11e9-2f0d-e3e88a113be6"
+authors = ["Gregory Wagner <wagner.greg@gmail.com>"]
 version = "0.1.0"
 
 [deps]
+OceanTurb = "d848d694-35fd-11e9-1c91-9995598ac29e"
