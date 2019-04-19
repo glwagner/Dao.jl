@@ -9,7 +9,8 @@ using Base
 using NetCDF
 using JLD2
 
-pathto = "/Users/andresouza/Desktop/Julia/Greg_Wagner/OceanTurb.jl/"
+#pathto = "/Users/andresouza/Desktop/Julia/Greg_Wagner/OceanTurb.jl/"
+pathto = "/home/sandre_google_mit_edu/Dao.jl/src/"
 include(pathto*"convenience.jl")
 
 params = [0.1; 0.4; 6.33; 2.0; 6.4; 0.599; 1.36; 0.5; 2.5; 4.32; 0.3; 1.0; 1.0/4; 1.0/2; 1.0/3.0; 1.0/3.0]

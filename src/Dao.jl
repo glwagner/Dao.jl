@@ -9,6 +9,8 @@ using
     Statistics,
     Random
 
+#(loss::Function, param::Array{Float64,1}, error::Float64, error_scale::Float64, perturb::Function)
+#(loss::Function, param::Array{Float64,1}, error::Float64, error_scale::Float64, perturb::Function) 
 function markov_link(loss, param, error, error_scale, perturb)
     test_param = perturb(param)
     test_error = loss(test_param)
@@ -22,13 +24,8 @@ function markov_link(loss, param, error, error_scale, perturb)
     end
     return new_param, new_error, test_param, test_error
 end    
-    
-function markov_chain!(loss, param, error, test_param, test_error, error_scale, perturb, nt)
-    for i in 1:nt
-        param[i+1], error[i+1], test_param[i+1], test_error[i+1] = markov_link(loss, param[i], error[i], error_scale, perturb)
-    end
-end
-    
+
+#(loss::Function, init_param::Array{Float64,1}, perturb::Function, error_scale::Float64, nt::Int64)  
 function markov_chain(loss, init_param, perturb, error_scale, nt)
     param = ones(length(init_param),nt+1)
     @views @. param[:,1] = init_param
@@ -37,11 +34,11 @@ function markov_chain(loss, init_param, perturb, error_scale, nt)
     test_error = deepcopy(error)
     error[1] = loss(init_param)/error_scale
     for i in 1:nt
-        @views tmp1,tmp2,tmp3,tmp4 = markov_link(loss, param[:,i], error[i], error_scale, perturb)
-        @views @. param[:,i+1] = tmp1
-        error[i+1] = tmp2
-        @views @. test_param[:,i+1] = tmp3 
-        test_error[i+1] = tmp4
+        new_param, new_error, proposal_param, proposal_error = markov_link(loss, param[:,i], error[i], error_scale, perturb)
+        @views @. param[:,i+1] = new_param
+        error[i+1] = new_error
+        @views @. test_param[:,i+1] = proposal_param
+        test_error[i+1] = proposal_error
     end
     return param, error
 end
@@ -54,19 +51,16 @@ function markov_chain_extra(loss, init_param, perturb, error_scale, nt)
     test_error = deepcopy(error)
     error[1] = loss(init_param)/error_scale
     for i in 1:nt
-        @views tmp1,tmp2,tmp3,tmp4 = markov_link(loss, param[:,i], error[i], error_scale, perturb)
-        @views @. param[:,i+1] = tmp1
-        error[i+1] = tmp2
-        @views @. test_param[:,i+1] = tmp3 
-        test_error[i+1] = tmp4
+        new_param, new_error, proposal_param, proposal_error = markov_link(loss, param[:,i], error[i], error_scale, perturb)
+        @views @. param[:,i+1] = new_param
+        error[i+1] = new_error
+        @views @. test_param[:,i+1] = proposal_aram
+        test_error[i+1] = proposal_error
     end
     return param, error, test_param, test_error
 end
     
-function take_step(derror)
-    u = rand(Uniform(0, 1), 1)
-    log_u = log(u[1])
-    return log_u < derror
-end
+take_step(derror) = log(rand(Uniform(0, 1))) < derror
+
 
 end # module
