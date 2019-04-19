@@ -32,7 +32,7 @@ function markov_chain(loss, init_param, perturb, error_scale, nt)
     test_param = deepcopy(param) 
     error = ones(nt+1) .* 10^6
     test_error = deepcopy(error)
-    error[1] = loss(init_param)/error_scale
+    error[1] = loss(init_param)
     for i in 1:nt
         new_param, new_error, proposal_param, proposal_error = markov_link(loss, param[:,i], error[i], error_scale, perturb)
         @views @. param[:,i+1] = new_param
