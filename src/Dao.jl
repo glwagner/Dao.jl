@@ -28,7 +28,7 @@ the perturbation function `perturb`, and the error_scale `error_scale`.
 function markov_link(loss, param, error, error_scale, perturb)
     test_param = perturb(param)
     test_error = loss(test_param)
-    d_error = (test_error - error) / error_scale
+    d_error = (error - test_error) / error_scale
     if take_step(d_error)
         new_error = test_error
         new_param = test_param
