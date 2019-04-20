@@ -4,9 +4,10 @@ export
     markov_link,
     markov_chain,
 
-    MarkovLink,
-    MarkovChain,
-    LossFunction
+    MarkovLink, MarkovChain, LossFunction,
+
+    ColumnModel, ColumnModelData, simple_flux_model, temperature_loss
+    
 
 using
     Distributions,
@@ -17,6 +18,9 @@ using
 import Base: length
 
 include("markov.jl")
+include("file_wrangling.jl")
+include("column_models.jl")
+include("kpp_utils.jl")
 
 """
     markov_link(loss, param, error, error_scale, perturb)
