@@ -54,16 +54,3 @@ function MarkovChain(nlinks, first_link, loss, perturb)
 
     return MarkovChain(links, path, loss, perturb)
 end
-
-#=
-struct MarkovWalker{M, D, T}
-    loss :: LossFunction{M, D}
-    perturb :: Function
-    error_scale :: T
-end
-
-function MarkovChain(nlinks, first_link, walker)
-    return MarkovChain(nlinks, first_link, walker.loss, walker.perturb;
-                       error_scale=walker.error_scale)
-end
-=#
