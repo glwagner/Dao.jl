@@ -1,13 +1,18 @@
+module ColumnModels
+
+include("file_wrangling.jl")
+include("kpp_utils.jl")
+
 struct ColumnModelData{T}
     N  :: Int
     L  :: T
     Fb :: T
     Fu :: T
     Bz :: T
-    K₀ :: T 
-    α  :: T 
-    g  :: T 
-    f  :: T 
+    K₀ :: T
+    α  :: T
+    g  :: T
+    f  :: T
     t  :: Array{T, 1}
     U  :: Array{Array{T, 1}, 1}
     V  :: Array{Array{T, 1}, 1}
@@ -46,7 +51,9 @@ function ColumnModelData(datapath)
     ColumnModelData(N, L, Fb, Fu, Bz, K₀, α, g, f, t, U, V, T, S, E)
 end
 
-struct ColumnModel{M, T}
+struct MetaColumnModel{M, T}
     turbmodel :: M
     dt :: T
+end
+
 end

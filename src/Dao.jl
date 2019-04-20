@@ -1,12 +1,16 @@
 module Dao
 
-export
+export # this file:
     markov_link,
     markov_chain,
 
+    # markov.jl
     MarkovLink,
     MarkovChain,
-    LossFunction
+    LossFunction,
+
+    # column_models/
+    ColumnModels
 
 using
     Distributions,
@@ -17,6 +21,7 @@ using
 import Base: length
 
 include("markov.jl")
+include("column_models/column_models.jl")
 
 """
     markov_link(loss, param, error, error_scale, perturb)
