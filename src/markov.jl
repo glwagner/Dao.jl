@@ -7,7 +7,7 @@ MarkovLink(loss::Function, param) = MarkovLink(param, loss(param))
 MarkovLink(n::Int, T=Float64) = MarkovLink(zeros(T, n), zero(T))
 
 function like_direction(new_link, current_link, scale)
-    return log(rand(Uniform(0, 1))) < (new_link.error - current_link.error) / scale
+    return log(rand(Uniform(0, 1))) < (current_link.error - new_link.error) / scale
 end
 
 struct LossFunction{M, D, T} <: Function
