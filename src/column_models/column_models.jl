@@ -1,7 +1,12 @@
 module ColumnModels
 
+using
+    StaticArrays,
+    JLD2,
+    OceanTurb
+
+
 include("file_wrangling.jl")
-include("kpp_utils.jl")
 
 struct ColumnModelData{T}
     N  :: Int
@@ -55,5 +60,7 @@ struct MetaColumnModel{M, T}
     turbmodel :: M
     dt :: T
 end
+
+include("kpp_utils.jl")
 
 end

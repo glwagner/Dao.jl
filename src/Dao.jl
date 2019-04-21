@@ -3,11 +3,17 @@ module Dao
 export # this file:
     markov_link,
     markov_chain,
+    TrivialData,
 
     # markov.jl
     MarkovLink,
     MarkovChain,
     LossFunction,
+    errors,
+    params,
+
+    # perturbations.jl
+    NormalPerturbation,
 
     # column_models/
     ColumnModels
@@ -20,7 +26,10 @@ using
 
 import Base: length
 
+struct TrivialData end
+
 include("markov.jl")
+include("perturbations.jl")
 include("column_models/column_models.jl")
 
 """

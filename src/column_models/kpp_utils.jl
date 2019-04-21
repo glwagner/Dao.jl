@@ -2,7 +2,9 @@
 # Parameter sets
 #
 
-mutable struct FreeConvectionParameters{T} <: FieldVector{nparams, T}
+const nfcparams = 6
+
+mutable struct FreeConvectionParameters{T} <: FieldVector{nfcparams, T}
      CRi :: T
      CNL :: T
      CKE :: T
@@ -11,7 +13,7 @@ mutable struct FreeConvectionParameters{T} <: FieldVector{nparams, T}
     Cb_T :: T
 end
 
-sample_params = FreeConvectionParameters((0 for i = 1:nparams)...)
+sample_params = FreeConvectionParameters((0 for i = 1:nfcparams)...)
 
 function FreeConvectionParameters()
     parameters = KPP.Parameters()
@@ -57,21 +59,21 @@ function temperature_loss(params, model, data; iters=1)
 end
 
 #
-# Models 
+# Models
 #
 
 """
     simple_flux_model(constants; N=40, L=400, Bz=0.01, Fb=1e-8, Fu=0,
                       parameters=KPP.Parameters())
 
-Construct a model forced by 'simple', constant atmospheric buoyancy flux `Fb` 
-and velocity flux `Fu`, with resolution `N`, domain size `L`, and 
+Construct a model forced by 'simple', constant atmospheric buoyancy flux `Fb`
+and velocity flux `Fu`, with resolution `N`, domain size `L`, and
 and initial linear buoyancy gradient `Bz`.
 """
 function simple_flux_model(constants; N=40, L=400, Bz=0.01, Fb=1e-8, Fu=0,
                            parameters=KPP.Parameters())
 
-    model = KPP.Model(N=N, L=L, parameters=parameters, constants=constants, 
+    model = KPP.Model(N=N, L=L, parameters=parameters, constants=constants,
                       stepper=:BackwardEuler)
 
     # Initial condition
@@ -88,7 +90,7 @@ function simple_flux_model(constants; N=40, L=400, Bz=0.01, Fb=1e-8, Fu=0,
     return model
 end
 
-function simple_flux_model(datapath)
+function simple_flux_model(datapath::AbstractString)
     data_params, constants_dict = get_data_params(datapath)
     constants = KPP.Constants(; constants_dict...)
     simple_flux_model(constants, parameters; data_params...)
@@ -98,16 +100,4 @@ function simple_flux_model(data::ColumnModelData)
     constants = KPP.Constants(; α=data.α, g=data.g, f=data.f)
     setup = Dict((p, getproperty(data, p)) for p in (:N, :L, :Bz, :Fb, :Fu))
     return simple_flux_model(constants; setup...)
-end
-
-#
-# Perturbation functions
-#
-
-function uniform_perturbation(params, standard_deviation=[0.1 for p in params])
-    new_params = deepcopy(params)
-    for i in eachindex(new_params)
-        new_params[i] += rand(Normal(0, standard_deviation[i]))
-    end
-    return new_params
 end
