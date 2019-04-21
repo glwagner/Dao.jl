@@ -3,7 +3,6 @@ module Dao
 export # this file:
     markov_link,
     markov_chain,
-    TrivialData,
 
     # markov.jl
     MarkovLink,
@@ -25,8 +24,6 @@ using
     JLD2
 
 import Base: length
-
-struct TrivialData end
 
 include("markov.jl")
 include("perturbations.jl")
