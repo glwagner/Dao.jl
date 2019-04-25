@@ -59,7 +59,7 @@ end
 function _markov_chain!(nlinks, links, path, current, loss, perturb)
     for i = 1:nlinks
         new = MarkovLink(loss, perturb(current.param))
-        current = ifelse(markov_walk(new, current, loss.scale), new, current)
+        current = ifelse(accept(new, current, loss.scale), new, current)
         push!(links, new)
         @inbounds push!(path, ifelse(current===new, i, path[end]))
     end
@@ -67,7 +67,7 @@ function _markov_chain!(nlinks, links, path, current, loss, perturb)
     return nothing
 end
 
-markov_walk(new, current, scale) = new.error - current.error < scale * log(rand(Uniform(0, 1)))
+accept(new, current, scale) = current.error - new.error > scale * log(rand(Uniform(0, 1)))
 
 function errors(chain::MarkovChain)
     return map(x -> x.error, chain.links)
