@@ -71,6 +71,6 @@ function get_data_params(datapath)
             constants[c] = file["constants/$c"]
         end
     end
-    
+
     return data_params, constants
 end
