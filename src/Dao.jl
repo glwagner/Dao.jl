@@ -1,14 +1,11 @@
 module Dao
 
-export # this file:
-    markov_link,
-    markov_chain,
-
-    # markov.jl
-    MarkovLink,
-    MarkovChain,
+export # markov.jl
     NegativeLogLikelihood,
     NLL,
+    MarkovLink,
+    MarkovChain,
+    extend_markov_chain!,
     errors,
     params,
 

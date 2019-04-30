@@ -64,11 +64,11 @@ end
 function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]
     path = Int[]
-    _markov_chain!(nlinks, links, path, first_link, nll, sampler)
+    extend_markov_chain!(nlinks-1, links, path, first_link, nll, sampler)
     return MarkovChain(links, path, nll, sampler)
 end
 
-function _markov_chain!(nlinks, links, path, current, nll, sampler::MetropolisSampler)
+function extend_markov_chain!(nlinks, links, path, current, nll, sampler::MetropolisSampler)
     for i = 1:nlinks
         proposal = MarkovLink(nll, sampler.perturb(current.param))
         current = ifelse(accept(proposal, current, nll.scale), proposal, current)
@@ -77,6 +77,11 @@ function _markov_chain!(nlinks, links, path, current, nll, sampler::MetropolisSa
     end
 
     return nothing
+end
+
+function extend_markov_chain!(chain, nlinks)
+    return extend_markov_chain!(nlinks, chain.links, chain.path,
+                                chain.links[end], chain.nll, chain.sampler)
 end
 
 accept(new, current, scale) = current.error - new.error > scale * log(rand(Uniform(0, 1)))
