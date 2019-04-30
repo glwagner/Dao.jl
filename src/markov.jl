@@ -1,5 +1,5 @@
 """
-    NegativeLogLikelihood(model, data, compute_logdensity, scale=1)
+    NegativeLogLikelihood(model, data, compute_nll, scale=1)
 
 Construct a function that compute the negative log likelihood
 of the parameters `x` of `model`, given `data`.
@@ -32,21 +32,21 @@ struct MarkovLink{T, P}
     error :: T
 end
 
-MarkovLink(T, logdensity::NegativeLogLikelihood, param) = MarkovLink{T, typeof(param)}(param, logdensity(param))
-MarkovLink(logdensity::NegativeLogLikelihood, param) = MarkovLink(Float64, logdensity, param)
+MarkovLink(T, nll::NegativeLogLikelihood, param) = MarkovLink{T, typeof(param)}(param, nll(param))
+MarkovLink(nll::NegativeLogLikelihood, param) = MarkovLink(Float64, nll, param)
 
 """
-    MarkovChain(nlinks, first_link, error_scale, logdensity, perturb)
+    MarkovChain(nlinks, first_link, error_scale, nll, perturb)
 
 Generate a `MarkovChain` with `nlinks`, starting from `first_link`,
-using the `logdensity` function to compute errors with `error_scale`,
+using the `nll` function to compute errors with `error_scale`,
 and generating new parameters with `perturb`.
 """
 struct MarkovChain{T, X, L, P}
-         links :: Vector{MarkovLink{T, X}}
-          path :: Vector{Int}
-    logdensity :: L
-       sampler :: P
+      links :: Vector{MarkovLink{T, X}}
+       path :: Vector{Int}
+        nll :: L
+    sampler :: P
 end
 
 import Base: getindex
@@ -61,17 +61,17 @@ function params(chain::MarkovChain)
     return map(x -> x.param, chain.links)
 end
 
-function MarkovChain(nlinks::Int, first_link, logdensity, sampler)
+function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]
     path = Int[]
-    _markov_chain!(nlinks, links, path, first_link, logdensity, sampler)
-    return MarkovChain(links, path, logdensity, sampler)
+    _markov_chain!(nlinks, links, path, first_link, nll, sampler)
+    return MarkovChain(links, path, nll, sampler)
 end
 
-function _markov_chain!(nlinks, links, path, current, logdensity, sampler::MetropolisSampler)
+function _markov_chain!(nlinks, links, path, current, nll, sampler::MetropolisSampler)
     for i = 1:nlinks
-        proposal = MarkovLink(logdensity, sampler.perturb(current.param))
-        current = ifelse(accept(proposal, current, logdensity.scale), proposal, current)
+        proposal = MarkovLink(nll, sampler.perturb(current.param))
+        current = ifelse(accept(proposal, current, nll.scale), proposal, current)
         push!(links, proposal)
         @inbounds push!(path, ifelse(current===proposal, i, path[end]))
     end
