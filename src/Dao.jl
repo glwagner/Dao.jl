@@ -12,7 +12,8 @@ export # this file:
     errors,
     params,
 
-    # perturbations.jl
+    # samplers.jl
+    MetropolisSampler,
     NormalPerturbation,
 
     # column_models/
@@ -26,7 +27,7 @@ using
 
 import Base: length
 
-include("perturbations.jl")
+include("samplers.jl")
 include("markov.jl")
 
 include("old_markov.jl")

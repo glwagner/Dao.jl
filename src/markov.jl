@@ -32,8 +32,8 @@ struct MarkovLink{T, P}
     error :: T
 end
 
-MarkovLink(T, nll::NegativeLogLikelihood, param) = MarkovLink{T, typeof(param)}(param, nll(param))
-MarkovLink(nll::NegativeLogLikelihood, param) = MarkovLink(Float64, nll, param)
+MarkovLink(T, nll, param) = MarkovLink{T, typeof(param)}(param, nll(param))
+MarkovLink(nll, param) = MarkovLink(Float64, nll, param)
 
 """
     MarkovChain(nlinks, first_link, error_scale, nll, perturb)
