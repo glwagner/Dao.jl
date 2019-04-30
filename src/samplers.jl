@@ -9,21 +9,19 @@ NormalMetropolisSampler(std) = MetropolisSampler(NormalPerturbation(std))
 #
 
 struct NormalPerturbation{T}
-    standard_deviation :: T
+    std :: T
 end
 
-(perturb::NormalPerturbation)(param) = normal_perturbation(param, perturb.standard_deviation)
+(pert::NormalPerturbation)(𝒳) = normal_perturbation(𝒳, pert.std)
 
-function normal_perturbation!(perturbed_x::AbstractArray, x, std)
-    for i in eachindex(perturbed_x)
-        @inbounds perturbed_x[i] = x[i] + rand(Normal(0, std[i]))
+function normal_perturbation!(x_pert::AbstractArray, x, std)
+    for i in eachindex(x_pert)
+        @inbounds x_pert[i] = x[i] + rand(Normal(0, std[i]))
     end
 end
 
 function normal_perturbation(x::AbstractArray, std)
-    perturbed_x = similar(x)
-    normal_perturbation!(perturbed_x, x, std)
-    return perturbed_x
+    x_pert = similar(x)
+    normal_perturbation!(x_pert, x, std)
+    return x_pert
 end
-
-normal_perturbation(x::Number, std) = x + rand(Normal(0, std))
