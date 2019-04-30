@@ -42,16 +42,18 @@ Generate a `MarkovChain` with `nlinks`, starting from `first_link`,
 using the `nll` function to compute errors with `error_scale`,
 and generating new parameters with `perturb`.
 """
-struct MarkovChain{T, X, L, P}
-      links :: Vector{MarkovLink{T, X}}
-       path :: Vector{Int}
-        nll :: L
-    sampler :: P
+mutable struct MarkovChain{T, X, L, P}
+         links :: Vector{MarkovLink{T, X}}
+          path :: Vector{Int}
+           nll :: L
+       sampler :: P
+    acceptance :: Float64
 end
 
-import Base: getindex
+import Base: getindex, length
 
 getindex(chain::MarkovChain, inds...) = getindex(links, inds...)
+length(chain::MarkovChain) = length(chain.path)
 
 function errors(chain::MarkovChain)
     return map(x -> x.error, chain.links)
@@ -64,22 +66,32 @@ end
 function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]
     path = Int[]
-    extend_markov_chain!(nlinks-1, links, path, first_link, nll, sampler)
+    MarkovChain(links, path, nll, sampler, 0)
+    extend_markov_chain!(chain, nlinks-1)
     return MarkovChain(links, path, nll, sampler)
 end
 
 function extend_markov_chain!(nlinks, links, path, current, nll, sampler::MetropolisSampler)
+    accepted = 0
     for i = 1:nlinks
         proposal = MarkovLink(nll, sampler.perturb(current.param))
         current = ifelse(accept(proposal, current, nll.scale), proposal, current)
         push!(links, proposal)
-        @inbounds push!(path, ifelse(current===proposal, i, path[end]))
+        if current === proposal
+            accepted += 1
+            push!(path, i)
+        else
+            @inbounds push!(path, path[end])
+        end
     end
 
-    return nothing
+    return accepted
 end
 
 function extend_markov_chain!(chain, nlinks)
+    accepted₀ = length(chain) * chain.acceptance
+    accepted₊ = extend_markov_chain!(chain, nlinks)
+    chain.acceptance = (accepted₀ + accepted₊) / length(chain)
     return extend_markov_chain!(nlinks, chain.links, chain.path,
                                 chain.links[end], chain.nll, chain.sampler)
 end
