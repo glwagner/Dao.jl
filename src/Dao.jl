@@ -7,7 +7,8 @@ export # this file:
     # markov.jl
     MarkovLink,
     MarkovChain,
-    LogDensityFunction,
+    NegativeLogLikelihood,
+    NLL,
     errors,
     params,
 
