@@ -1,3 +1,9 @@
+struct MetropolisSampler{T}
+    perturb :: T
+end
+
+NormalMetropolisSampler(std) = MetropolisSampler(NormalPerturbation(std))
+
 #
 # Perturbation functions
 #
