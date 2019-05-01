@@ -90,10 +90,10 @@ end
 
 function extend_markov_chain!(chain, nlinks)
     accepted₀ = length(chain) * chain.acceptance
-    accepted₊ = extend_markov_chain!(chain, nlinks)
+    accepted₊ = extend_markov_chain!(nlinks, chain.links, chain.path,
+                                     chain.links[end], chain.nll, chain.sampler)
     chain.acceptance = (accepted₀ + accepted₊) / length(chain)
-    return extend_markov_chain!(nlinks, chain.links, chain.path,
-                                chain.links[end], chain.nll, chain.sampler)
+    return nothing
 end
 
 accept(new, current, scale) = current.error - new.error > scale * log(rand(Uniform(0, 1)))
