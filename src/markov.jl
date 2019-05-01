@@ -66,7 +66,7 @@ end
 function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]
     path = Int[]
-    markov_chain = MarkovChain(links, path, nll, sampler, 0)
+    markov_chain = MarkovChain(links, path, nll, sampler, 0.0)
     extend_markov_chain!(markov_chain, nlinks-1)
     return markov_chain
 end
