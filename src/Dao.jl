@@ -5,13 +5,15 @@ export # markov.jl
     NLL,
     MarkovLink,
     MarkovChain,
-    extend_markov_chain!,
+    extend!,
     errors,
     params,
+    optimal,
 
     # samplers.jl
     MetropolisSampler,
     NormalPerturbation,
+    NonNegativeNormalPerturbation,
 
     # column_models/
     ColumnModels
