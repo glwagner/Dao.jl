@@ -1,17 +1,17 @@
 """
-    NegativeLogLikelihood(model, data, cost; kwargs...)
+    NegativeLogLikelihood(model, data, loss; kwargs...)
 
 Construct a function that compute the negative log likelihood
 of the parameters `x` given `model, `data`, and a prior
 parameter distribution `prior`.
 
-The `cost` function has the calling signature
+The `loss` function has the calling signature
 
-    `cost(x, model, data)`,
+    `loss(x, model, data)`,
 
 when `weights` are `nothing`, or
 
-    `cost(x, model, data, weights)`,
+    `loss(x, model, data, weights)`,
 
 where `x` is a parameters object.
 
@@ -25,21 +25,21 @@ The keyword arguments permit the user to specify
 mutable struct NegativeLogLikelihood{P, W, M, D, T}
       model :: M
        data :: D
-       cost :: Function
+       loss :: Function
       scale :: T
       prior :: P
     weights :: W
 end
 
-function NegativeLogLikelihood(model, data, cost;
+function NegativeLogLikelihood(model, data, loss;
                                scale=1.0, prior=nothing, weights=nothing)
-    return NegativeLogLikelihood(model, data, cost, scale, prior, weights)
+    return NegativeLogLikelihood(model, data, loss, scale, prior, weights)
 end
 
 const NLL = NegativeLogLikelihood
 
-(l::NLL{<:Nothing, <:Nothing})(𝒳) = l.cost(𝒳, l.model, l.data)
-(l::NLL{<:Nothing})(𝒳) = l.cost(𝒳, l.model, l.data, l.weights)
+(l::NLL{<:Nothing, <:Nothing})(𝒳) = l.loss(𝒳, l.model, l.data)
+(l::NLL{<:Nothing})(𝒳) = l.loss(𝒳, l.model, l.data, l.weights)
 
 mutable struct BatchedNegativeLogLikelihood{P, W, M, D, T, BW}
       batch :: Vector{NLL{P, W, M, D, T}}
@@ -48,13 +48,13 @@ end
 
 BatchedNegativeLogLikelihood(batch) = BatchedNegativeLogLikelihood(batch, (1.0 for b in batch))
 
-const BNLL
+const BNLL = BatchedNegativeLogLikelihood
 
 function (bl::BNLL)(𝒳)
     @inbounds begin
-        total_err = bl.weights[1] * bl.batch[1].cost(𝒳)
+        total_err = bl.weights[1] * bl.batch[1].loss(𝒳)
         for i = 2:length(bl.batch)
-            total_err += bl.weights[i] * bl.batch[i].cost(𝒳)
+            total_err += bl.weights[i] * bl.batch[i].loss(𝒳)
         end
     end
 
