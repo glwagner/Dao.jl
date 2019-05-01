@@ -1,31 +1,65 @@
 """
-    NegativeLogLikelihood(model, data, compute_nll, scale=1)
+    NegativeLogLikelihood(model, data, cost; kwargs...)
 
 Construct a function that compute the negative log likelihood
-of the parameters `x` of `model`, given `data`.
+of the parameters `x` given `model, `data`, and a prior
+parameter distribution `prior`.
 
-The function `compute_nll` must have calling signature
+The `cost` function has the calling signature
 
-`compute_nll(x, model, data)`,
+    `cost(x, model, data)`,
+
+when `weights` are `nothing`, or
+
+    `cost(x, model, data, weights)`,
 
 where `x` is a parameters object.
+
+The keyword arguments permit the user to specify
+
+* `scale`
+* `prior`
+* `weights`
+
 """
-mutable struct NegativeLogLikelihood{P, M, D, T}
-          model :: M
-           data :: D
-    compute_nll :: Function
-          scale :: T
-          prior :: P
+mutable struct NegativeLogLikelihood{P, W, M, D, T}
+      model :: M
+       data :: D
+       cost :: Function
+      scale :: T
+      prior :: P
+    weights :: W
 end
 
-# Add constructors with a default `scale` and `prior`.
-function NegativeLogLikelihood(model, data, compute_nll, scale=1, prior=nothing)
-    return NegativeLogLikelihood(model, data, compute_nll, 1, prior)
+function NegativeLogLikelihood(model, data, cost;
+                               scale=1.0, prior=nothing, weights=nothing)
+    return NegativeLogLikelihood(model, data, cost, scale, prior, weights)
 end
 
 const NLL = NegativeLogLikelihood
 
-(l::NLL{<:Nothing})(𝒳) = l.compute_nll(𝒳, l.model, l.data)
+(l::NLL{<:Nothing, <:Nothing})(𝒳) = l.cost(𝒳, l.model, l.data)
+(l::NLL{<:Nothing})(𝒳) = l.cost(𝒳, l.model, l.data, l.weights)
+
+mutable struct BatchedNegativeLogLikelihood{P, W, M, D, T, BW}
+      batch :: Vector{NLL{P, W, M, D, T}}
+    weights :: BW
+end
+
+BatchedNegativeLogLikelihood(batch) = BatchedNegativeLogLikelihood(batch, (1.0 for b in batch))
+
+const BNLL
+
+function (bl::BNLL)(𝒳)
+    @inbounds begin
+        total_err = bl.weights[1] * bl.batch[1].cost(𝒳)
+        for i = 2:length(bl.batch)
+            total_err += bl.weights[i] * bl.batch[i].cost(𝒳)
+        end
+    end
+
+    return total_err
+end
 
 struct MarkovLink{T, P}
     param :: P
@@ -33,7 +67,7 @@ struct MarkovLink{T, P}
 end
 
 MarkovLink(T, nll, param) = MarkovLink{T, typeof(param)}(param, nll(param))
-MarkovLink(nll, param) = MarkovLink(Float64, nll, param)
+MarkovLink(nll::NLL, param) = MarkovLink(Float64, nll, param)
 
 """
     MarkovChain(nlinks, first_link, error_scale, nll, perturb)
@@ -55,23 +89,22 @@ import Base: getindex, length
 getindex(chain::MarkovChain, inds...) = getindex(links, inds...)
 length(chain::MarkovChain) = length(chain.path)
 
-function errors(chain::MarkovChain)
-    return map(x -> x.error, chain.links)
-end
+errors(chain::MarkovChain; after=1) = map(x -> x.error, view(chain.links, after:length(chain)))
 
-function params(chain::MarkovChain)
-    return map(x -> x.param, chain.links)
+function params(chain::MarkovChain{T, X}; after=1, matrix=false) where {T, X}
+    paramvector = map(x -> x.param, view(chain.links, after:length(chain)))
+    return matrix ? reinterpret(eltype(X), paramvector) : paramvector
 end
 
 function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]
     path = Int[]
     markov_chain = MarkovChain(links, path, nll, sampler, 0.0)
-    extend_markov_chain!(markov_chain, nlinks-1)
+    extend!(markov_chain, nlinks-1)
     return markov_chain
 end
 
-function extend_markov_chain!(nlinks, links, path, current, nll, sampler::MetropolisSampler)
+function extend!(nlinks, links, path, current, nll, sampler::MetropolisSampler)
     accepted = 0
     for i = 1:nlinks
         proposal = MarkovLink(nll, sampler.perturb(current.param))
@@ -88,12 +121,17 @@ function extend_markov_chain!(nlinks, links, path, current, nll, sampler::Metrop
     return accepted
 end
 
-function extend_markov_chain!(chain, nlinks)
+function extend!(chain, nlinks)
     accepted₀ = length(chain) * chain.acceptance
-    accepted₊ = extend_markov_chain!(nlinks, chain.links, chain.path,
+    accepted₊ = extend!(nlinks, chain.links, chain.path,
                                      chain.links[end], chain.nll, chain.sampler)
     chain.acceptance = (accepted₀ + accepted₊) / length(chain)
     return nothing
 end
 
-accept(new, current, scale) = current.error - new.error > scale * log(rand(Uniform(0, 1)))
+accept(new, current, scale) = current.error - new.error < scale * log(rand(Uniform(0, 1)))
+
+function optimal(chain)
+    iopt = argmin(errors(chain))
+    return chain.links[iopt].param, chain.links[iopt].error
+end
