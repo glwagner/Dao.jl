@@ -10,7 +10,7 @@ The function `compute_nll` must have calling signature
 
 where `x` is a parameters object.
 """
-struct NegativeLogLikelihood{P, M, D, T}
+mutable struct NegativeLogLikelihood{P, M, D, T}
           model :: M
            data :: D
     compute_nll :: Function
