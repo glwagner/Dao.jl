@@ -75,8 +75,9 @@ optimal(chain) = chain[argmin(errors(chain))]
 function status(chain::MarkovChain)
     return @sprintf("""
                    length | %d
-               acceptance | %.3f
-            initial error | %.6f
-            optimal error | %.6f
-    """, length(chain), chain.acceptance, chain[1].error, optimal(chain).error)
+               acceptance | %.9f
+     initial scaled error | %.9f
+     optimal scaled error | %.9f
+    """, length(chain), chain.acceptance, chain[1].error/chain.nll.scale,
+            optimal(chain).error/chain.nll.scale)
 end
