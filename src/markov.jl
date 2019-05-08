@@ -4,7 +4,7 @@ struct MarkovLink{T, P}
 end
 
 MarkovLink(T, nll, param) = MarkovLink{T, typeof(param)}(param, nll(param))
-MarkovLink(nll::NLL, param) = MarkovLink(Float64, nll, param)
+MarkovLink(nll::ANLL, param) = MarkovLink(Float64, nll, param)
 
 """
     MarkovChain(nlinks, first_link, error_scale, nll, perturb)

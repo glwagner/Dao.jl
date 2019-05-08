@@ -27,6 +27,10 @@ using
 
 import Base: length
 
+abstract type AbstractNegativeLogLikelihood end
+
+const ANLL = AbstractNegativeLogLikelihood
+
 """
     NegativeLogLikelihood(model, data, loss; kwargs...)
 
@@ -51,7 +55,7 @@ The keyword arguments permit the user to specify
 * `weights`
 
 """
-mutable struct NegativeLogLikelihood{P, W, M, D, T}
+mutable struct NegativeLogLikelihood{P, W, M, D, T} <: ANLL
       model :: M
        data :: D
        loss :: Function
@@ -70,23 +74,22 @@ const NLL = NegativeLogLikelihood
 (l::NLL{<:Nothing, <:Nothing})(𝒳) = l.loss(𝒳, l.model, l.data)
 (l::NLL{<:Nothing})(𝒳) = l.loss(𝒳, l.model, l.data, l.weights)
 
-mutable struct BatchedNegativeLogLikelihood{P, W, M, D, T, BW}
+mutable struct BatchedNegativeLogLikelihood{P, W, M, D, T, BW} <: ANLL
       batch :: Vector{NLL{P, W, M, D, T}}
     weights :: BW
 end
 
-BatchedNegativeLogLikelihood(batch) = BatchedNegativeLogLikelihood(batch, (1 for b in batch))
+BatchedNegativeLogLikelihood(batch) = BatchedNegativeLogLikelihood(batch, [1 for b in batch])
 
 const BNLL = BatchedNegativeLogLikelihood
 
 function (bl::BNLL)(𝒳)
     @inbounds begin
-        total_err = bl.weights[1] * bl.batch[1].loss(𝒳)
+        total_err = bl.weights[1] * bl.batch[1](𝒳)
         for i = 2:length(bl.batch)
-            total_err += bl.weights[i] * bl.batch[i].loss(𝒳)
+            total_err += bl.weights[i] * bl.batch[i](𝒳)
         end
     end
-
     return total_err
 end
 
