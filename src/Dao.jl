@@ -79,8 +79,9 @@ mutable struct BatchedNegativeLogLikelihood{P, W, M, D, T, BW} <: ANLL
       scale :: T
 end
 
-BatchedNegativeLogLikelihood(batch) = BatchedNegativeLogLikelihood(batch;
-    weights=[1 for b in batch], scale=1.0)
+function BatchedNegativeLogLikelihood(batch; weights=[1 for b in batch], scale=1.0)
+    return BatchedNegativeLogLikelihood(batch, weights, scale)
+end
 
 const BNLL = BatchedNegativeLogLikelihood
 
