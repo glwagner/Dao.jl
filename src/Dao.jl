@@ -21,9 +21,10 @@ export # markov.jl
     ColumnModels
 
 using
+    Printf,
+    Random,
     Distributions,
     Statistics,
-    Random,
     JLD2
 
 import Base: length
