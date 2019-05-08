@@ -70,7 +70,4 @@ end
 
 accept(new, current, scale) = current.error - new.error < scale * log(rand(Uniform(0, 1)))
 
-function optimal(chain)
-    iopt = argmin(errors(chain))
-    return chain.links[iopt].param, chain.links[iopt].error
-end
+optimal(chain) = chain[argmin(errors(chain))]
