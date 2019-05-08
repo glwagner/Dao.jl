@@ -24,7 +24,7 @@ end
 
 import Base: getindex, length, lastindex
 
-getindex(chain::MarkovChain, inds...) = getindex(links, inds...)
+getindex(chain::MarkovChain, inds...) = getindex(chain.links, inds...)
 length(chain::MarkovChain) = length(chain.path)
 lastindex(chain::MarkovChain) = length(chain)
 
