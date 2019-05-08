@@ -73,14 +73,10 @@ accept(new, current, scale) = current.error - new.error < scale * log(rand(Unifo
 optimal(chain) = chain[argmin(errors(chain))]
 
 function status(chain::MarkovChain)
-    return @sprintf(
-    """
-                A markov chain
-            =====================
+    return @sprintf("""
                    length | %d
                acceptance | %.3f
             initial error | %.6f
             optimal error | %.6f
-
     """, length(chain), chain.acceptance, chain[1].error, optimal(chain).error)
 end
