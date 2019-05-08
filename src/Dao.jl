@@ -29,7 +29,7 @@ using
 
 import Base: length
 
-abstract type AbstractNegativeLogLikelihood end
+abstract type AbstractNegativeLogLikelihood <: Function end
 const ANLL = AbstractNegativeLogLikelihood
 
 """

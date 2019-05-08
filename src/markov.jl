@@ -1,7 +1,7 @@
 struct MarkovLink{T, X}
     param :: X
     error :: T
-    function MarkovLink(nll::ANLL, param)
+    function MarkovLink(nll::Function, param)
         new{Float64, typeof(param)}(param, nll(param))
     end
 end
