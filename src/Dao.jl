@@ -10,6 +10,7 @@ export # markov.jl
     errors,
     params,
     optimal,
+    status,
 
     # samplers.jl
     MetropolisSampler,
