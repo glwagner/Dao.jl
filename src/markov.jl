@@ -25,7 +25,7 @@ end
 import Base: getindex, length, lastindex
 
 getindex(chain::MarkovChain, inds...) = getindex(links, inds...)
-length(chain::MarkovChain) = length(chain.path)+1
+length(chain::MarkovChain) = length(chain.path)
 lastindex(chain::MarkovChain) = length(chain)
 
 errors(chain::MarkovChain; after=1) = map(x -> x.error, view(chain.links, after:length(chain)))
@@ -37,7 +37,7 @@ end
 
 function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]
-    path = Int[]
+    path = Int[0]
     markov_chain = MarkovChain(links, path, nll, sampler, 0.0)
     extend!(markov_chain, nlinks-1)
     return markov_chain
