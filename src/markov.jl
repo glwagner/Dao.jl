@@ -68,7 +68,7 @@ function extend!(chain, nlinks)
     return nothing
 end
 
-accept(new, current, scale) = current.error - new.error < scale * log(rand(Uniform(0, 1)))
+accept(new, current, scale) = current.error - new.error > scale * log(rand(Uniform(0, 1)))
 
 optimal(chain) = chain[argmin(errors(chain))]
 
