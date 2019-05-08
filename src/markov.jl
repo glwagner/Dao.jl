@@ -22,10 +22,11 @@ mutable struct MarkovChain{T, X, L, P}
     acceptance :: Float64
 end
 
-import Base: getindex, length
+import Base: getindex, length, lastindex
 
 getindex(chain::MarkovChain, inds...) = getindex(links, inds...)
-length(chain::MarkovChain) = length(chain.path)
+length(chain::MarkovChain) = length(chain.path)+1
+lastindex(chain::MarkovChain) = length(chain)
 
 errors(chain::MarkovChain; after=1) = map(x -> x.error, view(chain.links, after:length(chain)))
 
