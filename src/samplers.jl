@@ -15,27 +15,12 @@ struct NormalPerturbation{T}
     std :: T
 end
 
-struct NonNegativeNormalPerturbation{T}
-    std :: T
-end
+(pert::NormalPerturbation)(θ) = normal_perturbation(θ, pert.std)
 
-const NNNP = NonNegativeNormalPerturbation
-
-(pert::NormalPerturbation)(𝒳) = normal_perturbation(𝒳, pert.std)
-(pert::NNNP)(𝒳) = non_negative_normal_perturbation(𝒳, pert.std)
-
-function normal_perturbation(x::AbstractArray, std)
-    x_pert = similar(x)
-    for i in eachindex(x_pert)
-        @inbounds x_pert[i] = x[i] + rand(Normal(0, std[i]))
+function normal_perturbation(θ::AbstractArray, std)
+    θ′ = similar(θ)
+    for i in eachindex(θ′)
+        @inbounds θ′[i] = θ[i] + rand(Normal(0, std[i]))
     end
-    return x_pert
-end
-
-function non_negative_normal_perturbation(x::AbstractArray, std)
-    x_pert = similar(x)
-    for i in eachindex(x_pert)
-        @inbounds x_pert[i] = max(0, x[i] + rand(Normal(0, std[i])))
-    end
-    return x_pert
+    return θ′
 end

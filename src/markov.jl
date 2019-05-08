@@ -1,73 +1,11 @@
-"""
-    NegativeLogLikelihood(model, data, cost; kwargs...)
-
-Construct a function that compute the negative log likelihood
-of the parameters `x` given `model, `data`, and a prior
-parameter distribution `prior`.
-
-The `cost` function has the calling signature
-
-    `cost(x, model, data)`,
-
-when `weights` are `nothing`, or
-
-    `cost(x, model, data, weights)`,
-
-where `x` is a parameters object.
-
-The keyword arguments permit the user to specify
-
-* `scale`
-* `prior`
-* `weights`
-
-"""
-mutable struct NegativeLogLikelihood{P, W, M, D, T}
-      model :: M
-       data :: D
-       cost :: Function
-      scale :: T
-      prior :: P
-    weights :: W
-end
-
-function NegativeLogLikelihood(model, data, cost;
-                               scale=1.0, prior=nothing, weights=nothing)
-    return NegativeLogLikelihood(model, data, cost, scale, prior, weights)
-end
-
-const NLL = NegativeLogLikelihood
-
-(l::NLL{<:Nothing, <:Nothing})(𝒳) = l.cost(𝒳, l.model, l.data)
-(l::NLL{<:Nothing})(𝒳) = l.cost(𝒳, l.model, l.data, l.weights)
-
-mutable struct BatchedNegativeLogLikelihood{P, W, M, D, T, BW}
-      batch :: Vector{NLL{P, W, M, D, T}}
-    weights :: BW
-end
-
-BatchedNegativeLogLikelihood(batch) = BatchedNegativeLogLikelihood(batch, (1.0 for b in batch))
-
-const BNLL
-
-function (bl::BNLL)(𝒳)
-    @inbounds begin
-        total_err = bl.weights[1] * bl.batch[1].cost(𝒳)
-        for i = 2:length(bl.batch)
-            total_err += bl.weights[i] * bl.batch[i].cost(𝒳)
-        end
-    end
-
-    return total_err
-end
-
-struct MarkovLink{T, P}
-    param :: P
+struct MarkovLink{T, X}
+    param :: X
     error :: T
+    function MarkovLink(nll::Function, param)
+        new{Float64, typeof(param)}(param, nll(param))
+    end
 end
 
-MarkovLink(T, nll, param) = MarkovLink{T, typeof(param)}(param, nll(param))
-MarkovLink(nll::NLL, param) = MarkovLink(Float64, nll, param)
 
 """
     MarkovChain(nlinks, first_link, error_scale, nll, perturb)
@@ -84,10 +22,11 @@ mutable struct MarkovChain{T, X, L, P}
     acceptance :: Float64
 end
 
-import Base: getindex, length
+import Base: getindex, length, lastindex
 
-getindex(chain::MarkovChain, inds...) = getindex(links, inds...)
+getindex(chain::MarkovChain, inds...) = getindex(chain.links, inds...)
 length(chain::MarkovChain) = length(chain.path)
+lastindex(chain::MarkovChain) = length(chain)
 
 errors(chain::MarkovChain; after=1) = map(x -> x.error, view(chain.links, after:length(chain)))
 
@@ -98,7 +37,7 @@ end
 
 function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]
-    path = Int[]
+    path = Int[0]
     markov_chain = MarkovChain(links, path, nll, sampler, 0.0)
     extend!(markov_chain, nlinks-1)
     return markov_chain
@@ -131,7 +70,13 @@ end
 
 accept(new, current, scale) = current.error - new.error < scale * log(rand(Uniform(0, 1)))
 
-function optimal(chain)
-    iopt = argmin(errors(chain))
-    return chain.links[iopt].param, chain.links[iopt].error
+optimal(chain) = chain[argmin(errors(chain))]
+
+function status(chain::MarkovChain)
+    return @sprintf("""
+                   length | %d
+               acceptance | %.3f
+            initial error | %.6f
+            optimal error | %.6f
+    """, length(chain), chain.acceptance, chain[1].error, optimal(chain).error)
 end
