@@ -1,10 +1,9 @@
-struct MarkovLink{T, P}
-    param :: P
+struct MarkovLink{T, X}
+    param :: X
     error :: T
 end
 
-MarkovLink(T, nll, param) = MarkovLink{T, typeof(param)}(param, nll(param))
-MarkovLink(nll::ANLL, param) = MarkovLink(Float64, nll, param)
+MarkovLink(nll::ANLL, param) = MarkovLink{Float64, typeof(param)}(param, nll(param))
 
 """
     MarkovChain(nlinks, first_link, error_scale, nll, perturb)
