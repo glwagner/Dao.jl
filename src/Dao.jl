@@ -11,6 +11,8 @@ export # markov.jl
     params,
     optimal,
     status,
+    paramnames,
+    paramindex,
 
     # samplers.jl
     MetropolisSampler,

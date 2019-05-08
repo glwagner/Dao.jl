@@ -35,6 +35,9 @@ function params(chain::MarkovChain{T, X}; after=1, matrix=false) where {T, X}
     return matrix ? reinterpret(eltype(X), paramvector) : paramvector
 end
 
+paramnames(chain::MarkovChain{T, X}) where {T, X} = fieldnames(X)
+paramindex(p, chain) = findlast(θ->θ==p, paramnames(chain))
+
 function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]
     path = Int[0]
