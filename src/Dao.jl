@@ -18,7 +18,7 @@ export # markov.jl
     # samplers.jl
     MetropolisSampler,
     NormalPerturbation,
-    NonNegativeNormalPerturbation,
+    BoundedNormalPerturbation,
 
     # column_models/
     ColumnModels
