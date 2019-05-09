@@ -35,8 +35,22 @@ function params(chain::MarkovChain{T, X}; after=1, matrix=false) where {T, X}
     return matrix ? reinterpret(eltype(X), paramvector) : paramvector
 end
 
-paramnames(chain::MarkovChain{T, X}) where {T, X} = fieldnames(X)
+paramtype(::MarkovLink{T, X}) where {T, X} = X
+paramtype(::MarkovChain{T, X}) where {T, X} = X
+paramnames(::MarkovLink{T, X}) where {T, X} = fieldnames(X)
+paramnames(::MarkovChain{T, X}) where {T, X} = fieldnames(X)
 paramindex(p, chain) = findlast(θ->θ==p, paramnames(chain))
+
+function vectorize(chain; after=1, finite_errors=false)
+    errs = errors(chain, after=after)
+    prms = params(chain, after=after)
+    if finite_errors
+        valids = isfinite.(errs)
+        return errs[valids], prms[valids]
+    else
+        return errs, prms
+    end
+end
 
 function MarkovChain(nlinks::Int, first_link, nll, sampler)
     links = [first_link]

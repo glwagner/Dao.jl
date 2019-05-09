@@ -11,6 +11,7 @@ export # markov.jl
     params,
     optimal,
     status,
+    paramtype,
     paramnames,
     paramindex,
 
