@@ -11,11 +11,14 @@ export # markov.jl
     params,
     optimal,
     status,
+    paramtype,
+    paramnames,
+    paramindex,
 
     # samplers.jl
     MetropolisSampler,
     NormalPerturbation,
-    NonNegativeNormalPerturbation,
+    BoundedNormalPerturbation,
 
     # column_models/
     ColumnModels
