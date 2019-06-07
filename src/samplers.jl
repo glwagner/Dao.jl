@@ -8,9 +8,6 @@ NormalMetropolisSampler(std) = MetropolisSampler(NormalPerturbation(std))
 # Perturbation functions
 #
 
-torus(x, lower, upper) = lower + (x % 1 - 0.5 * (sign(x) - 1)) * (upper - lower)
-bound(x, lower::Number, upper::Number) = torus(x, upper, lower)
-
 struct NormalPerturbation{T}
     std :: T
 end
@@ -22,6 +19,8 @@ end
 
 (pert::NormalPerturbation)(θ) = normal_perturbation(θ, pert.std)
 (pert::BoundedNormalPerturbation)(θ) = bounded_normal_perturbation(θ, pert.std, pert.bounds)
+
+torus(x, lower, upper) = lower + (x % 1 - 0.5 * (sign(x) - 1)) * (upper - lower)
 
 function normal_perturbation(θ::AbstractArray, std)
     θ′ = similar(θ)

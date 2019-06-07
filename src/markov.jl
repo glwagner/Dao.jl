@@ -1,3 +1,10 @@
+"""
+    MarkovLink(nll, param)
+
+Calculate a link in the Markov chain, using the negative log likelihood
+function `nll` to calculate the negative log likelihood or 'error'
+associated with `param`.
+"""
 struct MarkovLink{T, X}
     param :: X
     error :: T
@@ -6,6 +13,8 @@ struct MarkovLink{T, X}
     end
 end
 
+paramtype(::MarkovLink{T, X}) where {T, X} = X
+paramnames(::MarkovLink{T, X}) where {T, X} = fieldnames(X)
 
 """
     MarkovChain(nlinks, first_link, error_scale, nll, perturb)
@@ -14,15 +23,13 @@ Generate a `MarkovChain` with `nlinks`, starting from `first_link`,
 using the `nll` function to compute errors with `error_scale`,
 and generating new parameters with `perturb`.
 """
-mutable struct MarkovChain{T, X, L, P}
+mutable struct MarkovChain{T, X, L, S}
          links :: Vector{MarkovLink{T, X}}
           path :: Vector{Int}
            nll :: L
-       sampler :: P
+       sampler :: S
     acceptance :: Float64
 end
-
-import Base: getindex, length, lastindex
 
 getindex(chain::MarkovChain, inds...) = getindex(chain.links, inds...)
 length(chain::MarkovChain) = length(chain.path)
@@ -35,9 +42,7 @@ function params(chain::MarkovChain{T, X}; after=1, matrix=false) where {T, X}
     return matrix ? reinterpret(eltype(X), paramvector) : paramvector
 end
 
-paramtype(::MarkovLink{T, X}) where {T, X} = X
 paramtype(::MarkovChain{T, X}) where {T, X} = X
-paramnames(::MarkovLink{T, X}) where {T, X} = fieldnames(X)
 paramnames(::MarkovChain{T, X}) where {T, X} = fieldnames(X)
 paramindex(p, chain) = findlast(θ->θ==p, paramnames(chain))
 
