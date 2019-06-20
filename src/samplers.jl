@@ -20,7 +20,7 @@ end
 (pert::NormalPerturbation)(θ) = normal_perturbation(θ, pert.std)
 (pert::BoundedNormalPerturbation)(θ) = bounded_normal_perturbation(θ, pert.std, pert.bounds)
 
-torus(x, lower, upper) = lower + (x % 1 - 0.5 * (sign(x) - 1)) * (upper - lower)
+torus(x, lower, upper) = lower + rem(x-lower, upper-lower, RoundDown)
 
 function normal_perturbation(θ::AbstractArray, std)
     θ′ = similar(θ)
