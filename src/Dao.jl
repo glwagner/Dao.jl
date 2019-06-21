@@ -105,7 +105,4 @@ end
 include("samplers.jl")
 include("markov.jl")
 
-# Please don't look in this file.
-include("old_markov.jl")
-
 end # module
