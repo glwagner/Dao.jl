@@ -16,6 +16,9 @@ end
 paramtype(::MarkovLink{T, X}) where {T, X} = X
 paramnames(::MarkovLink{T, X}) where {T, X} = fieldnames(X)
 
+Base.show(io::IO, link::MarkovLink) = 
+     print(io, @sprintf("MarkovLink(%s, %.4e)", "$(paramnames(link))", link.error))
+
 """
     MarkovChain(nlinks, first_link, error_scale, nll, perturb)
 
@@ -96,10 +99,13 @@ optimal(chain) = chain[argmin(errors(chain))]
 
 function status(chain::MarkovChain)
     return @sprintf("""
+     -- Markov chain with parameters %s --
+
                    length | %d
-               acceptance | %.9f
+         acceptance ratio | %.9f
      initial scaled error | %.9f
      optimal scaled error | %.9f
-    """, length(chain), chain.acceptance, chain[1].error/chain.nll.scale,
-            optimal(chain).error/chain.nll.scale)
+     current scaled error | %.9f
+     """, paramnames(chain), length(chain), chain.acceptance, chain[1].error/chain.nll.scale,
+          optimal(chain).error/chain.nll.scale, chain[end].error / chain.nll.scale)
 end
