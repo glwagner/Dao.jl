@@ -80,13 +80,13 @@ const NLL = NegativeLogLikelihood
 (nll::NLL{<:Nothing, W, <:Nothing})(θ) where W = nll.loss(θ, nll.model, nll.data, nll.weights)
 (nll::NLL{<:Nothing})(θ)                       = nll.loss(θ, nll.model, nll.data, nll.weights, nll.output)
 
-mutable struct BatchedNegativeLogLikelihood{P, W, M, D, T, BW} <: ANLL
-      batch :: Vector{NLL{P, W, M, D, T}}
-    weights :: BW
+mutable struct BatchedNegativeLogLikelihood{B, W, T} <: ANLL
+      batch :: B
+    weights :: W
       scale :: T
 end
 
-function BatchedNegativeLogLikelihood(batch; weights=[1 for b in batch], scale=1.0)
+function BatchedNegativeLogLikelihood(batch; weights=[1.0 for b in batch], scale=1.0)
     return BatchedNegativeLogLikelihood(batch, weights, scale)
 end
 
