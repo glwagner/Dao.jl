@@ -57,28 +57,21 @@ The keyword arguments permit the user to specify
 * `output`
 
 """
-mutable struct NegativeLogLikelihood{P, W, O, M, D, T} <: ANLL
+mutable struct NegativeLogLikelihood{P, M, D, L, T} <: ANLL
       model :: M
        data :: D
-       loss :: Function
+       loss :: L
       scale :: T
       prior :: P
-    weights :: W
-     output :: O
 end
 
-function NegativeLogLikelihood(model, data, loss;
-                               scale=1.0, prior=nothing, weights=nothing, output=nothing)
-    return NegativeLogLikelihood(model, data, loss, scale, prior, weights, output)
-end
+NegativeLogLikelihood(model, data, loss; scale=1.0, prior=nothing) =
+    NegativeLogLikelihood(model, data, loss, scale, prior)
 
 const NLL = NegativeLogLikelihood
 
-# Flavors of NLL signatures
-(nll::NLL{<:Nothing, <:Nothing, <:Nothing})(θ) = nll.loss(θ, nll.model, nll.data)
-(nll::NLL{<:Nothing, <:Nothing})(θ)            = nll.loss(θ, nll.model, nll.data, nll.output)
-(nll::NLL{<:Nothing, W, <:Nothing})(θ) where W = nll.loss(θ, nll.model, nll.data, nll.weights)
-(nll::NLL{<:Nothing})(θ)                       = nll.loss(θ, nll.model, nll.data, nll.weights, nll.output)
+# NLL signature with no prior
+(nll::NLL{<:Nothing})(θ) = nll.loss(θ, nll.model, nll.data)
 
 mutable struct BatchedNegativeLogLikelihood{B, W, T} <: ANLL
       batch :: B
