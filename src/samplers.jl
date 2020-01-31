@@ -9,31 +9,30 @@ NormalMetropolisSampler(std) = MetropolisSampler(NormalPerturbation(std))
 #
 
 struct NormalPerturbation{T}
-    std :: T
+    distribution :: T
+    function NormalPerturbation(covariance::AbstractArray)
+        distribution = MvNormal(covariance)
+        return new{typeof(distribution)}(distribution, bounds)
+    end
 end
 
 struct BoundedNormalPerturbation{T, B}
-    std :: T
+    distribution :: T
     bounds :: B
+    function BoundedNormalPerturbation(covariance::AbstractArray, bounds)
+        distribution = MvNormal(covariance)
+        return new{typeof(distribution), typeof(bounds)}(distribution, bounds)
+    end
 end
 
-(pert::NormalPerturbation)(θ) = normal_perturbation(θ, pert.std)
-(pert::BoundedNormalPerturbation)(θ) = bounded_normal_perturbation(θ, pert.std, pert.bounds)
+(pert::NormalPerturbation)(θ) = normal_perturbation(θ, pert.distribution)
+(pert::BoundedNormalPerturbation)(θ) = bounded_normal_perturbation(θ, pert.distribution, pert.bounds)
 
-torus(x, lower, upper) = lower + rem(x-lower, upper-lower, RoundDown)
+torus(x, lower, upper) = lower + rem(x - lower, upper - lower, RoundDown)
 
-function normal_perturbation(θ::AbstractArray, std)
-    θ′ = similar(θ)
-    for i in eachindex(θ′)
-        @inbounds θ′[i] = θ[i] + rand(Normal(0, std[i]))
-    end
-    return θ′
-end
-
-function bounded_normal_perturbation(θ, std, bounds)
-    θ′ = similar(θ)
-    for i in eachindex(θ′)
-        @inbounds θ′[i] = torus(θ[i] + rand(Normal(0, std[i])), bounds[i][1], bounds[i][2])
-    end
-    return θ′
+normal_perturbation(θ::AbstractArray, distribution) = θ .+ rand(distribution)
+    
+function bounded_normal_perturbation(θ, distribution, bounds)
+    θ′ = normal_perturbation(θ, distribution)
+    return torus.(θ′, bounds[1], bounds[2])
 end
