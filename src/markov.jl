@@ -9,7 +9,7 @@ struct MarkovLink{T, X}
     param :: X
     error :: T
     function MarkovLink(nll::Function, param)
-        new{Float64, typeof(param)}(param, nll(param))
+        new{Float64, typeof(param)}(param, nll(param) / nll.scale)
     end
 end
 
@@ -93,7 +93,7 @@ function extend!(chain, nlinks)
     return nothing
 end
 
-accept(new, current, scale) = current.error - new.error > scale * log(rand(Uniform(0, 1)))
+accept(new, current, scale) = current.error - new.error > log(rand(Uniform(0, 1)))
 
 optimal(chain) = chain[argmin(errors(chain))]
 
