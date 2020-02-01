@@ -9,15 +9,23 @@ struct MarkovLink{T, X}
     param :: X
     error :: T
     function MarkovLink(nll::Function, param)
-        new{Float64, typeof(param)}(param, nll(param))
+        return new{Float64, typeof(param)}(param, nll(param))
     end
 end
 
 paramtype(::MarkovLink{T, X}) where {T, X} = X
 paramnames(::MarkovLink{T, X}) where {T, X} = fieldnames(X)
 
-Base.show(io::IO, link::MarkovLink) = 
-     print(io, @sprintf("MarkovLink(%s, %.3e)", "$(paramnames(link))", link.error))
+function Base.show(io::IO, link::MarkovLink{T, X}) where {T, X}
+     names = [@sprintf("%-8s", name) for name in paramnames(link)]
+    values = [@sprintf("%-8.4f", getproperty(link.param, name)) for name in paramnames(link)]
+
+    return print(io, 
+                 @sprintf("%d-parameter MarkovLink{%s, %s}:\n", length(link.param), T, X),
+                 @sprintf("% 18s: %.6e\n", "error", link.error),
+                 @sprintf("% 18s: ", "parameter names"), names..., '\n',
+                 @sprintf("% 18s: ", "parameter values"), values...)
+end
 
 """
     MarkovChain(nlinks, first_link, error_scale, nll, perturb)
@@ -39,6 +47,15 @@ length(chain::MarkovChain) = length(chain.path)
 lastindex(chain::MarkovChain) = length(chain)
 
 errors(chain::MarkovChain; after=1) = map(x -> x.error, view(chain.links, after:length(chain)))
+
+function Base.show(io::IO, chain::MarkovChain{T, X}) where {T, X}
+    return print(io, 
+                 @sprintf("%d-parameter MarkovChain{%s, %s} with %d samples:\n", 
+                          length(chain[1].param), T, X, length(chain)),
+                 @sprintf("              acceptance: %.3f\n", chain.acceptance),
+                 @sprintf("    initial scaled error: %.3f\n", chain[1].error / chain.nll.scale),
+                 @sprintf("    optimal scaled error: %.3f\n\n", optimal(chain).error / chain.nll.scale))
+end
 
 function params(chain::MarkovChain{T, X}; after=1, matrix=false) where {T, X}
     paramvector = map(x -> x.param, view(chain.links, after:length(chain)))
@@ -107,4 +124,48 @@ function status(chain::MarkovChain)
      current scaled error | %.3e
      """, length(chain), chain.acceptance, chain[1].error/chain.nll.scale,
           optimal(chain).error/chain.nll.scale, chain[end].error / chain.nll.scale)
+end
+
+#
+# Initialization tool
+#
+
+function collect_samples(chain)
+    parameter_samples = zeros(length(chain.links[1].param), length(chain))
+    for (i, link) in enumerate(chain.links)
+        @inbounds parameter_samples[:, i] .= link.param
+    end
+    return parameter_samples
+end
+
+number_of_samples(samples::Int, iteration) = samples
+number_of_samples(samples::Function, iteration) = samples(iteration)
+
+function estimate_covariance(nll, initial_parameters, initial_covariance, perturbation=NormalPerturbation, 
+                             perturbation_args...; samples=100, niterations=1)
+
+    initial_link = MarkovLink(nll, initial_parameters)
+    covariance = initial_covariance
+    iteration = 1
+    chain = nothing
+
+    while iteration < niterations + 1
+        sampler = MetropolisSampler(perturbation(covariance, perturbation_args...))
+
+        nll.scale = initial_link.error
+
+        wall_time = @elapsed chain = MarkovChain(number_of_samples(samples, iteration), initial_link, nll, sampler)
+
+        parameter_samples = collect_samples(chain)
+
+        @printf("Iteration: %d, wall time: %.4f s, scaled optimal error: %.6f, unscaled optimal error: %.6e\n", 
+                iteration, wall_time, optimal(chain).error / nll.scale, optimal(chain).error)
+
+        covariance = cov(parameter_samples, dims=2)
+        initial_link = optimal(chain)
+
+        iteration += 1
+    end
+
+    return covariance, chain
 end

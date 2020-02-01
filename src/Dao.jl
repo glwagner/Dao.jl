@@ -15,6 +15,8 @@ export # markov.jl
     paramnames,
     paramindex,
 
+    estimate_covariance,
+
     # samplers.jl
     MetropolisSampler,
     NormalPerturbation,
