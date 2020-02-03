@@ -19,7 +19,6 @@ set_scale!(nll, schedule, iteration, initial_link) = nll.scale = schedule(nll, i
 function optimize(nll, initial_parameters, initial_covariance, 
                   perturbation=NormalPerturbation, perturbation_args...; 
                   samples=100, schedule=nothing, niterations=1)
-                  
 
     initial_link = MarkovLink(nll, initial_parameters)
     covariance = initial_covariance
@@ -37,8 +36,9 @@ function optimize(nll, initial_parameters, initial_covariance,
 
         parameter_samples = collect_samples(new_chain)
 
-        @printf("Iteration: %d, wall time: %.4f s, scaled optimal error: %.6f, unscaled optimal error: %.6e\n", 
-                iteration, wall_time, optimal(new_chain).error / nll.scale, optimal(new_chain).error)
+        @printf("Iteration: %d, samples: %d, wall time: %.4f s, scaled optimal error: %.6f, unscaled optimal error: %.6e\n", 
+                iteration, length(new_chain), wall_time, optimal(new_chain).error / new_chain[1].error, 
+                optimal(new_chain).error)
 
         covariance = cov(parameter_samples, dims=2)
 

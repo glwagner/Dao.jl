@@ -54,7 +54,7 @@ function Base.show(io::IO, chain::MarkovChain{T, X}) where {T, X}
                           length(chain[1].param), T, X, length(chain)),
                  @sprintf("              acceptance: %.3f\n", chain.acceptance),
                  @sprintf("    initial scaled error: %.3f\n", chain[1].error / chain.nll.scale),
-                 @sprintf("    optimal scaled error: %.3f\n\n", optimal(chain).error / chain.nll.scale))
+                 @sprintf("    optimal scaled error: %.3f\n", optimal(chain).error / chain.nll.scale))
 end
 
 function params(chain::MarkovChain{T, X}; after=1, matrix=false) where {T, X}
