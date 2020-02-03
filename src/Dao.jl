@@ -99,5 +99,6 @@ end
 
 include("samplers.jl")
 include("markov.jl")
+include("optimize.jl")
 
 end # module
