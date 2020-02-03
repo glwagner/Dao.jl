@@ -15,6 +15,8 @@ export # markov.jl
     paramnames,
     paramindex,
 
+    # optimize.jl
+    optimize,
     estimate_covariance,
 
     # samplers.jl

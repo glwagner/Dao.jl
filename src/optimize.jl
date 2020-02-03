@@ -13,8 +13,13 @@ end
 number_of_samples(samples::Int, iteration) = samples
 number_of_samples(samples::Function, iteration) = samples(iteration)
 
-function estimate_covariance(nll, initial_parameters, initial_covariance, perturbation=NormalPerturbation, 
-                       perturbation_args...; samples=100, niterations=1)
+set_scale!(nll, ::Nothing, iteration, initial_link) = nll.scale = initial_link.error
+set_scale!(nll, schedule, iteration, initial_link) = nll.scale = schedule(nll, iteration, initial_link)
+
+function optimize(nll, initial_parameters, initial_covariance, 
+                  perturbation=NormalPerturbation, perturbation_args...; 
+                  samples=100, schedule=nothing, niterations=1)
+                  
 
     initial_link = MarkovLink(nll, initial_parameters)
     covariance = initial_covariance
@@ -24,7 +29,7 @@ function estimate_covariance(nll, initial_parameters, initial_covariance, pertur
     while iteration < niterations + 1
         sampler = MetropolisSampler(perturbation(covariance, perturbation_args...))
 
-        nll.scale = initial_link.error
+        set_scale!(nll, schedule, iteration, initial_link)
 
         wall_time = @elapsed new_chain = MarkovChain(number_of_samples(samples, iteration), initial_link, nll, sampler)
 
@@ -44,3 +49,21 @@ function estimate_covariance(nll, initial_parameters, initial_covariance, pertur
 
     return covariance, chains
 end
+
+function estimate_covariance(nll, initial_parameters, initial_covariance,
+                             perturbation=NormalPerturbation, perturbation_args...; 
+                             samples=100, schedule=nothing)
+
+    initial_link = MarkovLink(nll, initial_parameters)
+    nll.scale = initial_link.error
+
+    covariance = initial_covariance
+
+    sampler = MetropolisSampler(perturbation(covariance, perturbation_args...))
+    chain = MarkovChain(samples, initial_link, nll, sampler)
+    parameter_samples = collect_samples(new_chain)
+    covariance = cov(parameter_samples, dims=2)
+
+    return covariance, chain
+end
+
