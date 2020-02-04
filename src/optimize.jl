@@ -16,35 +16,37 @@ number_of_samples(samples::Function, iteration) = samples(iteration)
 set_scale!(nll, ::Nothing, iteration, initial_link) = nll.scale = initial_link.error
 set_scale!(nll, schedule, iteration, initial_link) = nll.scale = schedule(nll, iteration, initial_link)
 
+adjust_covariance_estimate(::Nothing, estimate, iteration) = estimate
+adjust_covariance_estimate(schedule, estimate, iteration) = schedule(estimate, iteration)
+
 function optimize(nll, initial_parameters, initial_covariance, 
                   perturbation=NormalPerturbation, perturbation_args...; 
-                  samples=100, schedule=nothing, niterations=1)
+                  samples=100, schedule=nothing, niterations=1, covariance_schedule=nothing)
 
     initial_link = MarkovLink(nll, initial_parameters)
-    covariance = initial_covariance
+    covariance_estimate = initial_covariance
     iteration = 1
     chains = []
 
     while iteration < niterations + 1
+        covariance = adjust_covariance_estimate(covariance_schedule, covariance_estimate, iteration)
         sampler = MetropolisSampler(perturbation(covariance, perturbation_args...))
 
         set_scale!(nll, schedule, iteration, initial_link)
 
         wall_time = @elapsed new_chain = MarkovChain(number_of_samples(samples, iteration), initial_link, nll, sampler)
 
-        push!(chains, new_chain)
+        @printf("iteration: %d, samples: %d, acceptance: %.3f, scaled optimal error: %.6f, unscaled optimal error: %.6e, wall time: %.4f s,\n", 
+                iteration, length(new_chain), new_chain.acceptance, 
+                optimal(new_chain).error / new_chain[1].error, optimal(new_chain).error, wall_time)
 
+        # Reset initial links and covariance estimate
         parameter_samples = collect_samples(new_chain)
-
-        @printf("Iteration: %d, samples: %d, wall time: %.4f s, scaled optimal error: %.6f, unscaled optimal error: %.6e\n", 
-                iteration, length(new_chain), wall_time, optimal(new_chain).error / new_chain[1].error, 
-                optimal(new_chain).error)
-
-        covariance = cov(parameter_samples, dims=2)
-
+        covariance_estimate = cov(parameter_samples, dims=2)
         initial_link = optimal(new_chain)
 
         iteration += 1
+        push!(chains, new_chain)
     end
 
     return covariance, chains
