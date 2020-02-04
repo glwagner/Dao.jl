@@ -48,14 +48,13 @@ lastindex(chain::MarkovChain) = length(chain)
 
 errors(chain::MarkovChain; after=1) = map(x -> x.error, view(chain.links, after:length(chain)))
 
-function Base.show(io::IO, chain::MarkovChain{T, X}) where {T, X}
-    return print(io, 
-                 @sprintf("%d-parameter MarkovChain{%s, %s} with %d samples:\n", 
-                          length(chain[1].param), T, X, length(chain)),
-                 @sprintf("              acceptance: %.3f\n", chain.acceptance),
-                 @sprintf("    initial scaled error: %.3f\n", chain[1].error / chain.nll.scale),
-                 @sprintf("    optimal scaled error: %.3f\n", optimal(chain).error / chain.nll.scale))
-end
+Base.show(io::IO, chain::MarkovChain{T, X}) where {T, X} =
+    print(io,
+          @sprintf("%d-sample, %d-parameter MarkovChain{%s, %s}:\n", 
+                   length(chain), length(chain[1].param), T, X),
+          @sprintf("              acceptance: %.3f\n", chain.acceptance),
+          @sprintf("    initial scaled error: %.3f\n", chain[1].error / chain.nll.scale),
+          @sprintf("    optimal scaled error: %.3f\n", optimal(chain).error / chain.nll.scale))
 
 function params(chain::MarkovChain{T, X}; after=1, matrix=false) where {T, X}
     paramvector = map(x -> x.param, view(chain.links, after:length(chain)))

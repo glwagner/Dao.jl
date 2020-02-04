@@ -34,22 +34,28 @@ function optimize(nll, initial_parameters, initial_covariance,
 
         set_scale!(nll, schedule, iteration, initial_link)
 
-        wall_time = @elapsed new_chain = MarkovChain(number_of_samples(samples, iteration), initial_link, nll, sampler)
+        printlnt("Iterating...")
 
-        @printf("iteration: %d, samples: %d, acceptance: %.3f, scaled optimal error: %.6f, unscaled optimal error: %.6e, wall time: %.4f s,\n", 
-                iteration, length(new_chain), new_chain.acceptance, 
-                optimal(new_chain).error / new_chain[1].error, optimal(new_chain).error, wall_time)
+        wall_time = @elapsed chain = MarkovChain(number_of_samples(samples, iteration), 
+                                                     initial_link, nll, sampler)
+
+        @printf("% 24s: %d   \n", "iteration", iteration)
+        @printf("% 24s: %d   \n", "samples", length(chain))
+        @printf("% 24s: %.3f \n", "acceptance", chain.accceptance)
+        @printf("% 24s: %.6f \n", "scaled optimal error", optimal(chain).error / chain[1].error)
+        @printf("% 24s: %.6e \n", "unscaled optimal error",optimal(chain).error)
+        @printf("% 24s: %.6e \n", "wall time", wall_time)
 
         # Reset initial links and covariance estimate
-        parameter_samples = collect_samples(new_chain)
+        parameter_samples = collect_samples(chain)
         covariance_estimate = cov(parameter_samples, dims=2)
-        initial_link = optimal(new_chain)
+        initial_link = optimal(chain)
 
         iteration += 1
-        push!(chains, new_chain)
+        push!(chains, chain)
     end
 
-    return covariance, chains
+    return covariance_estimate, chains
 end
 
 function estimate_covariance(nll, initial_parameters, initial_covariance,
@@ -63,7 +69,7 @@ function estimate_covariance(nll, initial_parameters, initial_covariance,
 
     sampler = MetropolisSampler(perturbation(covariance, perturbation_args...))
     chain = MarkovChain(samples, initial_link, nll, sampler)
-    parameter_samples = collect_samples(new_chain)
+    parameter_samples = collect_samples(chain)
     covariance = cov(parameter_samples, dims=2)
 
     return covariance, chain
