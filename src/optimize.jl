@@ -34,22 +34,17 @@ function optimize(nll, initial_parameters, initial_covariance,
 
         set_scale!(nll, schedule, iteration, initial_link)
 
-        println("Iterating...")
+        println("Iterating...\n")
 
         wall_time = @elapsed chain = MarkovChain(number_of_samples(samples, iteration), 
                                                  initial_link, nll, sampler)
-
-        @printf("% 24s: %d   \n", "iteration", iteration)
-        @printf("% 24s: %d   \n", "samples", length(chain))
-        @printf("% 24s: %.3f \n", "acceptance", chain.acceptance)
-        @printf("% 24s: %.6f \n", "scaled optimal error", optimal(chain).error / chain[1].error)
-        @printf("% 24s: %.6e \n", "unscaled optimal error",optimal(chain).error)
-        @printf("% 24s: %.6e \n", "wall time", wall_time)
 
         # Reset initial links and covariance estimate
         parameter_samples = collect_samples(chain)
         covariance_estimate = cov(parameter_samples, dims=2)
         initial_link = optimal(chain)
+
+        print_optimization_status(iteration, chain, wall_time, covariance_estimate)
 
         iteration += 1
         push!(chains, chain)
@@ -57,6 +52,25 @@ function optimize(nll, initial_parameters, initial_covariance,
 
     return covariance_estimate, chains
 end
+
+function print_optimization_status(iteration, chain, wall_time, covariance)
+    variances = [covariance[i, i] for i in size(covariance)[1]]
+    
+    @printf("% 24s: %d   \n", "iteration", iteration)
+    @printf("% 24s: %d   \n", "samples", length(chain))
+    @printf("% 24s: %.6e \n", "wall time", wall_time)
+    @printf("% 24s: %.3f \n", "acceptance", chain.acceptance)
+    @printf("% 24s: %.3e \n", "temperature", chain.nll.scale)
+    @printf("% 24s: %.6f \n", "scaled optimal error", optimal(chain).error / chain[1].error)
+    @printf("% 24s: %.6e \n", "unscaled optimal error",optimal(chain).error)
+    @printf("% 24s: ", "parameter names"); [@printf("%-8s", n) for n in paramnames(chain[1])]
+    @printf("\n")
+    @printf("% 24s: ", "variances"); [@printf("%-8.4f", v) for v in variances]
+    @printf("\n\n")
+    
+    return nothing
+end
+
 
 function estimate_covariance(nll, initial_parameters, initial_covariance,
                              perturbation=NormalPerturbation, perturbation_args...; 
