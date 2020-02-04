@@ -34,7 +34,7 @@ function optimize(nll, initial_parameters, initial_covariance,
 
         set_scale!(nll, schedule, iteration, initial_link)
 
-        printlnt("Iterating...")
+        println("Iterating...")
 
         wall_time = @elapsed chain = MarkovChain(number_of_samples(samples, iteration), 
                                                      initial_link, nll, sampler)
