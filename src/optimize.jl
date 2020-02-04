@@ -37,11 +37,11 @@ function optimize(nll, initial_parameters, initial_covariance,
         println("Iterating...")
 
         wall_time = @elapsed chain = MarkovChain(number_of_samples(samples, iteration), 
-                                                     initial_link, nll, sampler)
+                                                 initial_link, nll, sampler)
 
         @printf("% 24s: %d   \n", "iteration", iteration)
         @printf("% 24s: %d   \n", "samples", length(chain))
-        @printf("% 24s: %.3f \n", "acceptance", chain.accceptance)
+        @printf("% 24s: %.3f \n", "acceptance", chain.acceptance)
         @printf("% 24s: %.6f \n", "scaled optimal error", optimal(chain).error / chain[1].error)
         @printf("% 24s: %.6e \n", "unscaled optimal error",optimal(chain).error)
         @printf("% 24s: %.6e \n", "wall time", wall_time)
