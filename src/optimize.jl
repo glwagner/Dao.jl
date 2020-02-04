@@ -54,7 +54,7 @@ function optimize(nll, initial_parameters, initial_covariance,
 end
 
 function print_optimization_status(iteration, chain, wall_time, covariance)
-    variances = [covariance[i, i] for i in size(covariance)[1]]
+    variances = [covariance[i, i] for i = 1:size(covariance)[1]]
     
     @printf("% 24s: %d   \n", "iteration", iteration)
     @printf("% 24s: %d   \n", "samples", length(chain))
