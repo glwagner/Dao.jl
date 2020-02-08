@@ -19,22 +19,28 @@ set_scale!(nll, schedule, iteration, initial_link) = nll.scale = schedule(nll, i
 adjust_covariance_estimate(::Nothing, estimate, iteration) = estimate
 adjust_covariance_estimate(schedule, estimate, iteration) = schedule(estimate, iteration)
 
+
 function optimize(nll, initial_parameters, initial_covariance, 
                   perturbation=NormalPerturbation, perturbation_args...; 
-                  samples=100, schedule=nothing, niterations=1, covariance_schedule=nothing)
+                  samples=100, schedule="default", iterations=1, covariance_schedule=nothing)
 
+    # Default schedule prescribes a linear decrease to temperature equal to error in first link)
+    default_schedule(nll, iter, link) = iter/iterations * link.error
+    schedule = schedule == "default" ? default_schedule : schedule
+
+    # Initialize optimization run
     initial_link = MarkovLink(nll, initial_parameters)
     covariance_estimate = initial_covariance
     iteration = 1
     chains = []
 
-    while iteration < niterations + 1
+    while iteration <= iterations
         covariance = adjust_covariance_estimate(covariance_schedule, covariance_estimate, iteration)
         sampler = MetropolisSampler(perturbation(covariance, perturbation_args...))
 
         set_scale!(nll, schedule, iteration, initial_link)
 
-        println("Iterating...\n")
+        println("Annealing...\n")
 
         wall_time = @elapsed chain = MarkovChain(number_of_samples(samples, iteration), 
                                                  initial_link, nll, sampler)
@@ -78,7 +84,6 @@ function estimate_covariance(nll, initial_parameters, initial_covariance,
 
     initial_link = MarkovLink(nll, initial_parameters)
     nll.scale = initial_link.error
-
     covariance = initial_covariance
 
     sampler = MetropolisSampler(perturbation(covariance, perturbation_args...))
