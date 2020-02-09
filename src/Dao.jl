@@ -15,15 +15,16 @@ export # markov.jl
     paramnames,
     paramindex,
 
-    # optimize.jl
-    collect_samples,
-    optimize,
-    estimate_covariance,
-
     # samplers.jl
     MetropolisSampler,
     NormalPerturbation,
-    BoundedNormalPerturbation
+    BoundedNormalPerturbation,
+
+    # utils.jl
+    collect_samples,
+    optimize,
+    estimate_covariance,
+    estimate_bounds
 
 using
     Printf,
@@ -102,6 +103,6 @@ end
 
 include("samplers.jl")
 include("markov.jl")
-include("optimize.jl")
+include("utils.jl")
 
 end # module

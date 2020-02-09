@@ -1,5 +1,5 @@
 #
-# Optimization tool
+# Utilities for optimization
 #
 
 function collect_samples(chain)
@@ -18,7 +18,6 @@ set_scale!(nll, schedule, iteration, initial_link) = nll.scale = schedule(nll, i
 
 adjust_covariance_estimate(::Nothing, estimate, iteration) = estimate
 adjust_covariance_estimate(schedule, estimate, iteration) = schedule(estimate, iteration)
-
 
 function optimize(nll, initial_parameters, initial_covariance, 
                   perturbation=NormalPerturbation, perturbation_args...; 
@@ -94,3 +93,54 @@ function estimate_covariance(nll, initial_parameters, initial_covariance,
     return covariance, chain
 end
 
+function initialize_bounds(nll, initial_parameters, initial_variance, initial_bounds=nothing; 
+                           variance_refinement = 0.1,
+                           temperature_refinement = 0.1,
+                           search_samples = 100,
+                           refinement_samples = 100
+                          )
+
+    # Initialize
+    perturbation = initial_bounds === nothing ? NormalPerturbation(initial_variance) :
+                                                BoundedNormalPerturbation(initial_variance, initial_bounds)
+
+    sampler = MetropolisSampler(initial_variance, perturbation) 
+    initial_link = MarkovLink(nll, initial_parameters)
+    initial_chain = MarkovChain(search_samples, initial_link, nll, sampler)
+
+    # Refine
+    refined_variance = @. variance_refinement * initial_variance
+
+    perturbation = initial_bounds === nothing ? NormalPerturbation(refinement_variance) :
+                                                BoundedNormalPerturbation(refinement_variance, refinement_bounds)
+
+    sampler = MetropolisSampler(refined_variance, perturbation)
+
+    nll.scale = temperature_refinement * optimal(initial_chain).error
+
+    refined_chain = MarkovChain(refinement_samples, optimal(initial_chain).param, nll, sampler)
+
+    # Estimate bounds
+    return refined_chain, estimate_bounds(refined_chain)
+end
+
+function estimate_bounds(chain; width=6)
+    # Estimate covariance
+    samples = collect_samples(chain)
+    Σ = cov(samples, dims=2)
+
+    C₀ = chain[1].param
+    bounds = [(0.0, 0.0) for c in C₀]
+
+    # Set bounds equal to optimal ± width * std(C) for each C.
+    for i = 1:length(C)
+        C★ = optimal(chain).param
+        σ = Σ[i, i]
+        lower_bound = max(0.0, C★ - width * √σ)
+        upper_bound = C★ + width * √σ
+
+        bounds[i] = (lower_bound, upper_bound)
+    end
+
+    return bounds
+end
