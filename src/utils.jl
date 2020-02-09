@@ -19,6 +19,14 @@ set_scale!(nll, schedule, iteration, initial_link) = nll.scale = schedule(nll, i
 adjust_covariance_estimate(::Nothing, estimate, iteration) = estimate
 adjust_covariance_estimate(schedule, estimate, iteration) = schedule(estimate, iteration)
 
+"""
+    optimize(nll, initial_parameters, initial_covariance, 
+             perturbation=NormalPerturbation, perturbation_args...; 
+             samples=100, schedule="default", iterations=1, covariance_schedule=nothing)
+
+Attempt to find the optimal parameter value that minimizes a negative log likelihood function `nll` using
+simulated-annealing-like procedure.
+"""
 function optimize(nll, initial_parameters, initial_covariance, 
                   perturbation=NormalPerturbation, perturbation_args...; 
                   samples=100, schedule="default", iterations=1, covariance_schedule=nothing)
@@ -93,6 +101,22 @@ function estimate_covariance(nll, initial_parameters, initial_covariance,
     return covariance, chain
 end
 
+"""
+    initialize_bounds(nll, initial_parameters, initial_variance, initial_bounds=nothing; 
+                         variance_refinement = 0.1,
+                      temperature_refinement = 0.1,
+                              search_samples = 100,
+                          refinement_samples = 100)
+
+Use a two-step algorithm consisting of an initial search starting from `initial_parameters`,
+with `search_samples` and proposals with `initial_variance` and `initial_bounds`, followed by 
+a refinement step using `refinement_samples`, the sample bounds as the initial bounds,
+a variance equal to `variance_refinement` multiplied by `initial_variance`, and 
+a temperature equal to `temperature_refinement` multiplied by the error of the 
+optimal search sample. Returns an estimate of parameter bounds and both Markov chains.
+If `initial_bounds` are not given, both the initial search and refinement search are 
+unbounded.
+"""
 function initialize_bounds(nll, initial_parameters, initial_variance, initial_bounds=nothing; 
                            variance_refinement = 0.1,
                            temperature_refinement = 0.1,
@@ -121,10 +145,16 @@ function initialize_bounds(nll, initial_parameters, initial_variance, initial_bo
     refined_chain = MarkovChain(refinement_samples, optimal(initial_chain).param, nll, sampler)
 
     # Estimate bounds
-    return refined_chain, estimate_bounds(refined_chain)
+    return estimate_bounds(refined_chain), refined_chain, initial_chain
 end
 
-function estimate_bounds(chain; width=6)
+"""
+    estimate_bounds(chain; width=6, positive=true)
+
+Estimate bounds on parameters in a MarkovChain using a window of size 
+`width` multplied by their standard deviation, centered on optimal values.
+"""
+function estimate_bounds(chain; width=6, absolute_lower_bound=0.0, absolute_upper_bound=Inf)
     # Estimate covariance
     samples = collect_samples(chain)
     Σ = cov(samples, dims=2)
@@ -136,8 +166,12 @@ function estimate_bounds(chain; width=6)
     for i = 1:length(C)
         C★ = optimal(chain).param
         σ = Σ[i, i]
-        lower_bound = max(0.0, C★ - width * √σ)
+
+        lower_bound = C★ - width * √σ
         upper_bound = C★ + width * √σ
+
+        lower_bound = max(absolute_lower_bound, lower_bound)
+        upper_bound = min(absolute_upper_bound, upper_bound)
 
         bounds[i] = (lower_bound, upper_bound)
     end
