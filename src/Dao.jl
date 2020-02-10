@@ -22,8 +22,11 @@ export # markov.jl
 
     # utils.jl
     collect_samples,
-    optimize,
+    anneal,
+    AdaptiveAlgebraicSchedule,
+    AdaptiveExponentialSchedule,
     estimate_covariance,
+    initialize_bounds,
     estimate_bounds
 
 using
@@ -34,6 +37,8 @@ using
     JLD2
 
 import Base: length, getindex, lastindex
+
+import Statistics: cov
 
 abstract type AbstractNegativeLogLikelihood <: Function end
 const ANLL = AbstractNegativeLogLikelihood
@@ -104,5 +109,6 @@ end
 include("samplers.jl")
 include("markov.jl")
 include("utils.jl")
+include("annealing.jl")
 
 end # module

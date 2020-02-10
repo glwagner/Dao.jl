@@ -45,6 +45,7 @@ end
 getindex(chain::MarkovChain, inds...) = getindex(chain.links, inds...)
 length(chain::MarkovChain) = length(chain.path)
 lastindex(chain::MarkovChain) = length(chain)
+cov(chain::MarkovChain) = cov(collect_samples(chain), dims=2)
 
 errors(chain::MarkovChain; after=1) = map(x -> x.error, view(chain.links, after:length(chain)))
 
@@ -112,15 +113,25 @@ accept(proposal, current, scale) = current.error - proposal.error > scale * log(
 
 optimal(chain) = chain[argmin(errors(chain))]
 
-function status(chain::MarkovChain)
-    return @sprintf("""
-     -- Markov chain status --
+function status(chain, iter=nothing, wall_time=nothing)
 
-                   length | %d
-         acceptance ratio | %.3f
-     initial scaled error | %.3e
-     optimal scaled error | %.3e
-     current scaled error | %.3e
-     """, length(chain), chain.acceptance, chain[1].error/chain.nll.scale,
-          optimal(chain).error/chain.nll.scale, chain[end].error / chain.nll.scale)
+    covariance = cov(chain)
+    variances = [covariance[i, i] for i = 1:size(covariance)[1]]
+    
+    iter != nothing && @printf("% 24s | %d   \n", "iter", iter)
+    wall_time != nothing && @printf("% 24s | %s   \n", "wall time", prettytime(wall_time))
+
+    @printf("% 24s | %d   \n", "samples", length(chain))
+    @printf("% 24s | %.3f \n", "acceptance", chain.acceptance)
+    @printf("% 24s | %.3e \n", "temperature", chain.nll.scale)
+    @printf("% 24s | %.6f \n", "scaled optimal error", optimal(chain).error / chain[1].error)
+    @printf("% 24s | %.6e \n", "unscaled optimal error",optimal(chain).error)
+    @printf("% 24s | ", "parameter names"); [@printf("%-8s", n) for n in paramnames(chain[1])]
+    @printf("\n")
+    @printf("% 24s | ", "variances"); [@printf("%-8.4f", v) for v in variances]
+    @printf("\n")
+    @printf("% 24s | ", "optimal values"); [@printf("%-8.4f", p) for p in optimal(chain).param]
+    @printf("\n\n")
+    
+    return nothing
 end
