@@ -96,11 +96,11 @@ end
 
 const BNLL = BatchedNegativeLogLikelihood
 
-function (bl::BNLL)(𝒳)
+function (bl::BNLL)(θ)
     @inbounds begin
-        total_err = bl.weights[1] * bl.batch[1](𝒳)
+        total_err = bl.weights[1] * bl.batch[1](θ)
         for i = 2:length(bl.batch)
-            total_err += bl.weights[i] * bl.batch[i](𝒳)
+            total_err += bl.weights[i] * bl.batch[i](θ)
         end
     end
     return total_err
