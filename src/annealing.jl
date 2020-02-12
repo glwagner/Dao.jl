@@ -26,6 +26,20 @@ struct AnnealingProblem{N, M, P, R, S, I, A, C}
         covariance_schedule :: C
 end
 
+function Base.show(io::IO, a::AnnealingProblem)
+    print(io, "Annealing problem with Markov chains:\n\n")
+
+    for chain in a.markov_chains
+        show(io, chain)
+        print(io, '\n')
+    end
+
+    print(io, "Optimal sample:\n\n")
+    show(io, optimal(a.markov_chains[end]))
+
+    return nothing
+end
+
 """
     anneal(nll, initial_parameters, initial_covariance, 
            perturbation=NormalPerturbation, perturbation_args...; 

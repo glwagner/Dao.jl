@@ -102,6 +102,11 @@ function extend!(nlinks, links, path, current, nll, sampler::MetropolisSampler)
     return accepted
 end
 
+"""
+    extend!(chain, nlinks)
+    
+Extend a Markov `chain` by `nlinks`.
+"""
 function extend!(chain, nlinks)
     accepted₀ = length(chain) * chain.acceptance
     accepted₊ = extend!(nlinks, chain.links, chain.path, chain.links[end], chain.nll, chain.sampler)
