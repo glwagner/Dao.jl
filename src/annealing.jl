@@ -27,7 +27,7 @@ struct AnnealingProblem{N, M, P, R, S, I, A, C}
 end
 
 function Base.show(io::IO, a::AnnealingProblem)
-    print(io, "Annealing problem with Markov chains:\n\n")
+    print(io, "Dao.AnnealingProblem with markov_chains:\n\n")
 
     for chain in a.markov_chains
         show(io, chain)
