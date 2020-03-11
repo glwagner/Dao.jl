@@ -43,7 +43,7 @@ mutable struct MarkovChain{T, X, L, S}
 end
 
 getindex(chain::MarkovChain, inds...) = getindex(chain.links, inds...)
-length(chain::MarkovChain) = length(chain.path)
+length(chain::MarkovChain) = length(chain.links)
 lastindex(chain::MarkovChain) = length(chain)
 cov(chain::MarkovChain) = cov(collect_samples(chain), dims=2)
 
@@ -90,10 +90,10 @@ function extend!(nlinks, links, path, current, nll, sampler::MetropolisSampler)
     for i = 1:nlinks
         proposal = MarkovLink(nll, sampler.perturb(current.param))
         current = ifelse(accept(proposal, current, nll.scale), proposal, current)
-        push!(links, proposal)
+        push!(links, current)
         if current === proposal
             accepted += 1
-            push!(path, i)
+            @inbounds push!(path, path[end]+1)
         else
             @inbounds push!(path, path[end])
         end
