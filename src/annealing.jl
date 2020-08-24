@@ -76,7 +76,7 @@ function anneal(nll, initial_parameters, initial_covariance,
     # Annealing...
     while iter <= iterations
         println("Annealing (iteration: $iter)...\n")
-        nsamples, initial_link, covariance = prepare_annealing(prob, iter, samples)
+        nsamples, initial_link, covariance = prepare_annealing(prob, iter, samples, covariance)
         chain = mcmc!(prob, iter, nsamples, initial_link, covariance)
         iter += 1
     end
@@ -98,15 +98,16 @@ function mcmc!(p, iter, nsamples, initial_link, covariance)
     return chain
 end
 
-function prepare_annealing(prob, iter, samples)
+function prepare_annealing(prob, iter, samples, previous_covariance)
 
     # Choose next link based on optimal parameters
     chain = prob.markov_chains[end]
     parameters = optimal(chain).param
     link = MarkovLink(prob.negative_log_likelihood, parameters)
 
-    # Use covariance estimate from prior chain to choose next covariance
-    covariance_estimate = cov(chain)
+    # If acceptance is greater than 10%, use covariance estimate from prior chain
+    # to choose next covariance. Otherwise, use the previous covariance estimate.
+    covariance_estimate = chain.acceptance > 0.1 ? previous_covariance : cov(chain)
 
     temperature, covariance = adjust_thermostat(prob.annealing_schedule, prob.covariance_schedule,
                                                 covariance_estimate, iter, link, chain)
