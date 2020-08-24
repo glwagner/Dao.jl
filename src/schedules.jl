@@ -24,7 +24,7 @@ function adjust_thermostat(annealing_schedule, covariance_schedule,
 
     # If acceptance is high enough and iter > 1, set the new covariance based on the
     # previous covariance estimate, new temperature, and covariance schedule parameters.
-    new_covariance = (iter == 1 || previous_chain.acceptance > covariance_schedule.acceptance_lower_limit) ? 
+    new_covariance = (iter == 1 || previous_chain.acceptance < covariance_schedule.acceptance_lower_limit) ? 
                      covariance_estimate : 
                      scale(iter, covariance_schedule) * (new_temp / old_temp) * covariance_estimate
 
