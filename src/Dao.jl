@@ -35,6 +35,7 @@ using
     Distributions,
     Statistics,
     JLD2
+    Base.Threads
 
 import Base: length, getindex, lastindex
 
@@ -97,9 +98,9 @@ end
 const BNLL = BatchedNegativeLogLikelihood
 
 function (bl::BNLL)(θ)
+    total_err = 0.0
     @inbounds begin
-        total_err = bl.weights[1] * bl.batch[1](θ)
-        for i = 2:length(bl.batch)
+        Base.Threads.@threads for i = 1:length(bl.batch)
             total_err += bl.weights[i] * bl.batch[i](θ)
         end
     end
