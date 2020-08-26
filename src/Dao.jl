@@ -41,6 +41,8 @@ import Base: length, getindex, lastindex
 
 import Statistics: cov
 
+using LinearAlgebra: isposdef
+
 abstract type AbstractNegativeLogLikelihood <: Function end
 const ANLL = AbstractNegativeLogLikelihood
 
