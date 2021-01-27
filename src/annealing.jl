@@ -107,7 +107,10 @@ function prepare_annealing(prob, iter, samples, previous_covariance)
 
     # If acceptance is greater than 10%, use covariance estimate from prior chain
     # to choose next covariance. Otherwise, use the previous covariance estimate.
-    covariance_estimate = chain.acceptance > 0.1 ? previous_covariance : cov(chain)
+    covariance_estimate = cov(chain)
+
+    # Use previous covariance if the estimated covariance matrix is not positive definite
+    !isposdef(covariance_estimate) && (covariance_estimate = previous_covariance)
 
     temperature, covariance = adjust_thermostat(prob.annealing_schedule, prob.covariance_schedule,
                                                 covariance_estimate, iter, link, chain)
