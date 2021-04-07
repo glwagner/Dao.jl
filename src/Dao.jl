@@ -87,26 +87,27 @@ const NLL = NegativeLogLikelihood
 # NLL signature with no prior
 (nll::NLL{<:Nothing})(θ) = nll.loss(θ, nll.model, nll.data)
 
-mutable struct BatchedNegativeLogLikelihood{B, W, T} <: ANLL
+mutable struct BatchedNegativeLogLikelihood{B, W, T, E} <: ANLL
       batch :: B
     weights :: W
       scale :: T
+      error :: E
 end
 
 function BatchedNegativeLogLikelihood(batch; weights=[1.0 for b in batch], scale=1.0)
-    return BatchedNegativeLogLikelihood(batch, weights, scale)
+    return BatchedNegativeLogLikelihood(batch, weights, scale, zeros(length(batch)))
 end
 
 const BNLL = BatchedNegativeLogLikelihood
 
 function (bl::BNLL)(θ)
-    total_err = 0.0
+    bl.error .= 0
     @inbounds begin
         Base.Threads.@threads for i = 1:length(bl.batch)
-            total_err += bl.weights[i] * bl.batch[i](θ)
+            bl.error[i] = bl.weights[i] * bl.batch[i](θ)
         end
     end
-    return total_err
+    return sum(bl.error)
 end
 
 include("samplers.jl")
