@@ -107,7 +107,7 @@ function (bl::BNLL)(θ)
             bl.error[i] = bl.weights[i] * bl.batch[i](θ)
         end
     end
-    return sum(bl.error)
+    return mean(bl.error)
 end
 
 include("samplers.jl")
